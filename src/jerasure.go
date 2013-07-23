@@ -1,8 +1,9 @@
 // +build linux
 
-// Package jerasure wraps the Jerasure C library which calculates
-// recovery symbols for use in implementing erasure coding.
-package jerasure
+// Package goerasure wraps the Jerasure C library in a Go object
+// oriented interface that allows the user to perform erasure coding
+// operations in Go using various erasure codes.
+package goerasure
 
 // #include "jerasure.h"
 import "C"

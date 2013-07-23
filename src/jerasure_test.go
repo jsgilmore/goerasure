@@ -1,4 +1,4 @@
-package jerasure
+package goerasure
 
 import (
 	"testing"
