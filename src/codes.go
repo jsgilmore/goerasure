@@ -2,7 +2,7 @@
 
 // Package jerasure wraps the Jerasure C library which calculates
 // recovery symbols for use in implementing erasure coding.
-package jerasure
+package goerasure
 
 /*
 #include <stdio.h>
