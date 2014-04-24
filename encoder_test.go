@@ -24,7 +24,7 @@ func TestEncoder(t *testing.T) {
 	m := 2
 	w := 7
 	packetsize := 1024
-	buffersize := int64(500000)
+	buffersize := int64(688128)
 
 	// Select a Liber8tion code from the codes.go library
 	code := NewLiberationCode(k, m, w, packetsize, buffersize)
