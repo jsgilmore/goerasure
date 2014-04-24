@@ -20,16 +20,14 @@ import (
 
 func TestEncoder(t *testing.T) {
 	// Set coding parameters to test for
-	k := 4
+	k := 6
 	m := 2
-	w := 8
+	w := 7
 	packetsize := 1024
-	// buffer_size := int64(500000)
-	buffersize := int64(131072)
-	// buffer_size := int64(0)
+	buffersize := int64(500000)
 
 	// Select a Liber8tion code from the codes.go library
-	code := NewLiber8tionCode(k, m, w, packetsize, buffersize)
+	code := NewLiberationCode(k, m, w, packetsize, buffersize)
 
 	err := Encode("testfiles/testfile", code)
 	if err != nil {
