@@ -31,7 +31,7 @@ func TestEncoder(t *testing.T) {
 	// Select a Liber8tion code from the codes.go library
 	code := NewLiber8tionCode(k, m, w, packetsize, buffersize)
 
-	err := Encode("testfile", code)
+	err := Encode("testfiles/testfile", code)
 	if err != nil {
 		panic(err)
 	}
@@ -50,7 +50,7 @@ func BenchmarkEncoder(b *testing.B) {
 	// Select a Liber8tion code from the codes.go library
 	code := NewLiber8tionCode(k, m, w, packetsize, buffersize)
 	
-	stripeName := "testfile"
+	stripeName := "testfiles/testfile"
 	
 	for i := 0; i < b.N; i++ {
 		err := Encode(stripeName, code)

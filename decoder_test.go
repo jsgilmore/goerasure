@@ -31,7 +31,7 @@ func TestDecoder(t *testing.T) {
 	// Select a Liber8tion code from the codes.go library
 	code := NewLiber8tionCode(k, m, w, packetsize, buffersize)
 
-	err := Decode("testfile", code)
+	err := Decode("testfiles/testfile", code)
 	if err != nil {
 		panic(err)
 	}
@@ -50,7 +50,7 @@ func BenchmarkDecoder(b *testing.B) {
 	// Select a Liber8tion code from the codes.go library
 	code := NewLiber8tionCode(k, m, w, packetsize, buffersize)
 	
-	stripeName := "testfile"
+	stripeName := "testfiles/testfile"
 	
 	for i := 0; i < b.N; i++ {
 		Decode(stripeName, code)
