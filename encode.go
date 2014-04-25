@@ -24,7 +24,7 @@ import (
 	"os"
 )
 
-func LoadDataBlocks(stripeName string, k int) (blocks []LenReader) {
+func loadDataBlocks(stripeName string, k int) (blocks []LenReader) {
 	// Create an array to store handles to all data blocks
 	blocks = make([]LenReader, k)
 	
@@ -40,20 +40,23 @@ func LoadDataBlocks(stripeName string, k int) (blocks []LenReader) {
 		// This is where I was. The issue is whether this function
 		// returns something new, which has to be allocs, or whether
 		// it just works.
-		blocks[i] = NewFileLenReader(block)
+		blocks[i] = newFileLenReader(block)
 	}
 	return
 }
 
+// The Encode function takes in a stripe name, where the stripe name
+// is the base name of a stripe of data blocks. It then encodes the
+// data blocks with the specified coder and writes the coding blocks to disc.
 func Encode(stripeName string, code Coder) (err error) {
 
 	k := code.K()
 	m := code.M()
 	bufferSize := code.Buffersize()
 	
-	blocks := LoadDataBlocks(stripeName, k)
+	blocks := loadDataBlocks(stripeName, k)
 	
-	bw := NewFileBlockWriter(stripeName)
+	bw := newFileBlockWriter(stripeName)
 		
 	// Read the block sizes and ensure that all blocks are the same size
 	size, err := compareAndGetSizes(blocks)
@@ -76,10 +79,7 @@ func Encode(stripeName string, code Coder) (err error) {
 	coding := allocateBuffers(m, bufferSize)
 	total := int64(0)
 
-	//code.PrintInfo()
-
 	for i := 0; i < readins; i++ {
-		//fmt.Printf("readins=%d,i=%d,size=%d,total=%d,buffersize=%d\n", readins, i, size, total, buffersize)
 		n := 0
 
 		for j := 0; j < k; j++ {
@@ -95,29 +95,12 @@ func Encode(stripeName string, code Coder) (err error) {
 			total += int64(n)
 		}
 
-		// Debugging code
-		/*for u := 0; u < int(bufferSize) ; u++ {
-			if data[0][u] != '0' {
-				msg := fmt.Sprintf("Data contents before encoding are not '0', but %d", data[0][u])
-				panic(msg)
-			}
-		}*/
-		
 		code.Encode(data, coding)
-
-		// Debugging code
-		/*for u := 0; u < int(bufferSize) ; u++ {
-			if data[0][u] != '0' {
-				msg := fmt.Sprintf("Data contents after encoding are not '0', but %d", data[0][u])
-				panic(msg)
-			}
-		}*/
 
 		bw.Data(data)
 		bw.Coding(coding)
 	}
-	// Only write out the coding blocks, since the original data still exists.
-	//bw.WriteData()
+	// Write out coding blocks
 	bw.WriteCoding()
 	return
 }

@@ -23,13 +23,13 @@ func TestEncoder(t *testing.T) {
 	k := 6
 	m := 2
 	w := 7
-	packetsize := 1024
-	buffersize := int64(688128)
+	packetsize := 128
+	buffersize := int64(258048)
 
-	// Select a Liber8tion code from the codes.go library
+	// Select a Liberation code from the codes.go library
 	code := NewLiberationCode(k, m, w, packetsize, buffersize)
 
-	err := Encode("testfiles/testfile", code)
+	err := Encode("testfiles/encoderTest", code)
 	if err != nil {
 		panic(err)
 	}
@@ -37,18 +37,16 @@ func TestEncoder(t *testing.T) {
 
 func BenchmarkEncoder(b *testing.B) {
 	// Set coding parameters to test for
-	k := 8
+	k := 6
 	m := 2
-	w := 8
-	packetsize := 1024
-	// buffer_size := int64(500000)
-	buffersize := int64(524288)
-	// buffer_size := int64(0)
+	w := 7
+	packetsize := 128
+	buffersize := int64(258048)
 	
-	// Select a Liber8tion code from the codes.go library
-	code := NewLiber8tionCode(k, m, w, packetsize, buffersize)
+	// Select a Liberation code from the codes.go library
+	code := NewLiberationCode(k, m, w, packetsize, buffersize)
 	
-	stripeName := "testfiles/testfile"
+	stripeName := "testfiles/encoderTest"
 	
 	for i := 0; i < b.N; i++ {
 		err := Encode(stripeName, code)

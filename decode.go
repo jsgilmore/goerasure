@@ -24,7 +24,7 @@ import (
 	"os"
 )
 
-func LoadBlocks(stripeName string, k, m int) (blocks []LenReader, erasures []int) {
+func loadBlocks(stripeName string, k, m int) (blocks []LenReader, erasures []int) {
 	// Create an array to store handles to all data and parity blocks
 	blocks = make([]LenReader, k + m)
 	
@@ -35,7 +35,7 @@ func LoadBlocks(stripeName string, k, m int) (blocks []LenReader, erasures []int
 	var blockName string
 	
 	for i:= 0 ; i < k ; i++ {
-		blockName = fmt.Sprintf("MyCoding/%s_k%d", stripeName, i)
+		blockName = fmt.Sprintf("%s_k%d", stripeName, i)
 		
 		block, err := os.Open(blockName)
 		if err != nil {
@@ -47,13 +47,13 @@ func LoadBlocks(stripeName string, k, m int) (blocks []LenReader, erasures []int
 		
 			// I'm assuming that if no file a found, the file pointer
 			// returned will just dereference to a zero size file
-			blocks[i] = NewFileLenReader(block)
+			blocks[i] = newFileLenReader(block)
 			fmt.Printf("Successfully opened file: %s\n", blockName)
 		}
 	}
 	
 	for i:= 0 ; i < m ; i++ {
-		blockName = fmt.Sprintf("MyCoding/%s_m%d", stripeName, i)
+		blockName = fmt.Sprintf("%s_m%d", stripeName, i)
 		
 		block, err := os.Open(blockName)
 		if err != nil {
@@ -66,7 +66,7 @@ func LoadBlocks(stripeName string, k, m int) (blocks []LenReader, erasures []int
 		
 			// I'm assuming that if no file a found, the file pointer
 			// returned will just dereference to a zero size file
-			blocks[k + i] = NewFileLenReader(block)
+			blocks[k + i] = newFileLenReader(block)
 			fmt.Printf("Successfully opened file: %s\n", blockName)
 		}
 	}
@@ -82,9 +82,9 @@ func Decode(stripeName string, code Coder) (err error) {
 	m := code.M()
 	buffersize := code.Buffersize()
 	
-	blocks, erasures := LoadBlocks(stripeName, k, m)
+	blocks, erasures := loadBlocks(stripeName, k, m)
 	
-	numErasures := NumErasures(erasures)
+	numErasures := numErasures(erasures)
 	if numErasures > m {
 		msg := fmt.Sprintf("Found more erasures than parities. Found %d erasures with only %d parities.", numErasures, m)
 		panic(msg)	//This panic might be downgraded to a return error agter testing.
@@ -93,7 +93,7 @@ func Decode(stripeName string, code Coder) (err error) {
 		return nil
 	}
 	
-	bw := NewFileBlockWriter(stripeName)
+	bw := newFileBlockWriter(stripeName)
 	
 	// Read the block sizes and ensure that all blocks are the same size
 	size, err := compareAndGetSizes(blocks);
@@ -128,7 +128,7 @@ func Decode(stripeName string, code Coder) (err error) {
 		// Read the data blocks into memory
 		for j := 0 ; j < k; j++ {
 			
-			if WasErased(erasures, j) {
+			if wasErased(erasures, j) {
 				continue
 			}
 			
@@ -146,7 +146,7 @@ func Decode(stripeName string, code Coder) (err error) {
 		// Read the coding blocks into memory
 		for j := 0 ; j < m; j++ {
 			
-			if WasErased(erasures, k + j) {
+			if wasErased(erasures, k + j) {
 				continue
 			}
 			
@@ -162,14 +162,6 @@ func Decode(stripeName string, code Coder) (err error) {
 		}
 			
 		code.Decode(data, coding, erasures)
-		
-		// Debugging code, which I'll remove when I have more faith in
-		// the jerasure library
-		for u := int64(0) ; u < buffersize ; u++ {
-			if data[0][u] != '0' {
-				panic("Data contents after decoding do not match 0")
-			}
-		}
 
 		bw.Data(data)
 		bw.Coding(coding)
@@ -178,7 +170,7 @@ func Decode(stripeName string, code Coder) (err error) {
 	return
 }
 
-func WasErased (erasures []int, id int) bool {
+func wasErased (erasures []int, id int) bool {
 	for _, value := range(erasures) {
 		if value == id {
 			return true
@@ -189,7 +181,7 @@ func WasErased (erasures []int, id int) bool {
 	return false
 }
 
-func NumErasures (erasures []int) int {
+func numErasures (erasures []int) int {
 	for num, value := range(erasures) {
 		if (value == -1) {
 			return num

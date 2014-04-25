@@ -108,8 +108,12 @@ func (this *code) CheckFileSize(size int64) {
 		newBuffersize := int64(math.Ceil(float64(this.bufferSize)/float64(multiple)) * float64(multiple))
 
 		if newBuffersize != this.bufferSize {
-			msg := fmt.Sprintf("Buffer size (%d) not alligned to the coding parameters. Suggested buffer size: %d", this.bufferSize, newBuffersize)
-			panic(msg)
+			if newBuffersize <= size {
+				msg := fmt.Sprintf("Buffer size (%d) is not alligned to the coding parameters. Suggested buffer size: %d", this.bufferSize, newBuffersize)
+				panic(msg)
+			} else {
+				panic("Coding parameters are no valid for this small a file. Perhaps decrease the packet size.")
+			}
 		}
 		// If bufferSize was not set, set it equal to the file size.
 	} else {
@@ -122,7 +126,7 @@ func (this *code) CheckFileSize(size int64) {
 	// the same as our new file size, otherwise we have to select new
 	// coding parameters.
 	if newsize/float64(size) != 1 {
-		msg := fmt.Sprintf("File size is not a multiple of buffer size. Suggested file size: %d", newsize)
+		msg := fmt.Sprintf("File size is not a multiple of buffer size (%f). Suggested file size: %f", newsize, newsize)
 		panic(msg)
 	}
 }
@@ -154,8 +158,8 @@ func (this *matrixCode) Encode(data, coding [][]byte) {
 	dataC := blockToC(data)
 	codingC := blockToC(coding)
 	C.jerasure_matrix_encode(C.int(this.k), C.int(this.m), C.int(this.w), this.matrix, dataC, codingC, C.int(this.bufferSize))
-	CToBlock(dataC, data)
-	CToBlock(codingC, coding)
+	cToBlock(dataC, data)
+	cToBlock(codingC, coding)
 	C.free(unsafe.Pointer(dataC))
 	C.free(unsafe.Pointer(codingC))
 }
@@ -177,8 +181,8 @@ func (this *matrixCode) Decode(data, coding [][]byte, erasures []int) {
 		panic("Erasure decoding failed")
 	}
 
-	CToBlock(dataC, data)
-	CToBlock(codingC, coding)
+	cToBlock(dataC, data)
+	cToBlock(codingC, coding)
 	C.free(unsafe.Pointer(dataC))
 	C.free(unsafe.Pointer(codingC))
 }
@@ -202,8 +206,8 @@ func (this *bitmatrixCode) Encode(data, coding [][]byte) {
 
 	C.jerasure_schedule_encode(C.int(this.k), C.int(this.m), C.int(this.w), this.schedule, dataC, codingC, C.int(this.bufferSize), C.int(this.packetSize))
 
-	CToBlock(dataC, data)
-	CToBlock(codingC, coding)
+	cToBlock(dataC, data)
+	cToBlock(codingC, coding)
 	C.free(unsafe.Pointer(dataC))
 	C.free(unsafe.Pointer(codingC))
 }
@@ -226,14 +230,14 @@ func (this *bitmatrixCode) Decode(data, coding [][]byte, erasures []int) {
 		panic("Erasure decoding failed")
 	}
 
-	CToBlock(dataC, data)
-	CToBlock(codingC, coding)
+	cToBlock(dataC, data)
+	cToBlock(codingC, coding)
 	C.free(unsafe.Pointer(dataC))
 	C.free(unsafe.Pointer(codingC))
 }
 
 // CToBlock received a C char matrix as input and outputs a Go byte matrix. 
-func CToBlock(dataC **C.char, data [][]byte) {
+func cToBlock(dataC **C.char, data [][]byte) {
 	for i := range data {
 		data[i] = C.GoBytes(unsafe.Pointer(C.jerasure_bytes_at(dataC, C.int(i))), C.int(len(data[i])))
 	}

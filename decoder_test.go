@@ -14,24 +14,22 @@
 
 package goerasure
 
-/*import (
+import (
 	"testing"
 )
 
 func TestDecoder(t *testing.T) {
 	// Set coding parameters to test for
-	k := 4
+	k := 6
 	m := 2
-	w := 8
-	packetsize := 1024
-	// buffer_size := int64(500000)
-	buffersize := int64(131072)
-	// buffer_size := int64(0)
+	w := 7
+	packetsize := 128
+	buffersize := int64(258048)
 
-	// Select a Liber8tion code from the codes.go library
-	code := NewLiber8tionCode(k, m, w, packetsize, buffersize)
+	// Select a Liberation code from the codes.go library
+	code := NewLiberationCode(k, m, w, packetsize, buffersize)
 
-	err := Decode("testfiles/testfile", code)
+	err := Decode("testfiles/decoderTest", code)
 	if err != nil {
 		panic(err)
 	}
@@ -39,20 +37,18 @@ func TestDecoder(t *testing.T) {
 
 func BenchmarkDecoder(b *testing.B) {
 	// Set coding parameters to test for
-	k := 4
+	k := 6
 	m := 2
-	w := 8
-	packetsize := 1024
-	// buffer_size := int64(500000)
-	buffersize := int64(131072)
-	// buffer_size := int64(0)
+	w := 7
+	packetsize := 128
+	buffersize := int64(258048)
 	
-	// Select a Liber8tion code from the codes.go library
-	code := NewLiber8tionCode(k, m, w, packetsize, buffersize)
+	// Select a Liberation code from the codes.go library
+	code := NewLiberationCode(k, m, w, packetsize, buffersize)
 	
-	stripeName := "testfiles/testfile"
+	stripeName := "testfiles/decoderTest"
 	
 	for i := 0; i < b.N; i++ {
 		Decode(stripeName, code)
 	}
-}*/
+}

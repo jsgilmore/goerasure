@@ -18,13 +18,14 @@ package goerasure
 
 // #include "jerasure.h"
 import "C"
+
 import (
-	"fmt"
-	"unsafe"
-	"io"
-	"path/filepath"
-	"os"
 	"errors"
+	"fmt"
+	"io"
+	"os"
+	"path/filepath"
+	"unsafe"
 )
 
 var (
@@ -49,7 +50,7 @@ type LenReader interface {
 	Len() int64
 }
 
-func NewFileLenReader(f *os.File) LenReader {
+func newFileLenReader(f *os.File) LenReader {
 	return &fileLenReader{f}
 }
 
@@ -58,7 +59,7 @@ type fileLenReader struct {
 }
 
 func (this *fileLenReader) Len() int64 {
-	
+
 	fi, err := this.f.Stat()
 	if err != nil {
 		return 0
@@ -78,17 +79,22 @@ type BlockWriter interface {
 	WriteErased(erasures []int) error
 }
 
-func NewFileBlockWriter(filename string) BlockWriter {
-	base := filepath.Base(filename)
-	ext := filepath.Ext(filename)
-	return &fileBlockWriter{base, ext, make(map[int] []byte), make(map[int] []byte)}
+func newFileBlockWriter(filename string) BlockWriter {
+	return &fileBlockWriter{
+		base:   filepath.Base(filename),
+		ext:    filepath.Ext(filename),
+		dir:    filepath.Dir(filename),
+		data:   make(map[int][]byte),
+		coding: make(map[int][]byte),
+	}
 }
 
 type fileBlockWriter struct {
-	base string
-	ext string
-	data map[int] []byte
-	coding map[int] []byte
+	base   string
+	ext    string
+	dir    string
+	data   map[int][]byte
+	coding map[int][]byte
 }
 
 func (this *fileBlockWriter) Data(data [][]byte) {
@@ -103,19 +109,13 @@ func (this *fileBlockWriter) Coding(coding [][]byte) {
 	}
 }
 
-func (this *fileBlockWriter) WriteData() error {
+func (this *fileBlockWriter) write(blocks map[int][]byte, dataOrCode string) error {
 	wd, err := os.Getwd()
 	if err != nil {
 		return err
 	}
-	dirpath := filepath.Join(wd, "MyCoding")
-	err = os.Mkdir(dirpath, 0777)
-	if err != nil && !os.IsExist(err) {
-		return err
-	}
-	for i, buf := range this.data {
-		path := filepath.Join(dirpath, fmt.Sprintf("%s_k%d%s", this.base, i, this.ext))
-		//fmt.Printf("Path is: %s\n", path)
+	for i, buf := range blocks {
+		path := filepath.Join(wd, this.dir, fmt.Sprintf("%s_%s%d%s", this.base, dataOrCode, i, this.ext))
 		file, err := os.Create(path)
 		if err != nil {
 			return err
@@ -129,57 +129,32 @@ func (this *fileBlockWriter) WriteData() error {
 	return nil
 }
 
+func (this *fileBlockWriter) WriteData() error {
+	return this.write(this.data, "k")
+}
+
 func (this *fileBlockWriter) WriteCoding() error {
-	wd, err := os.Getwd()
-	if err != nil {
-		return err
-	}
-	dirpath := filepath.Join(wd, "MyCoding")
-	err = os.Mkdir(dirpath, 0777)
-	if err != nil && !os.IsExist(err) {
-		return err
-	}
-	for i, buf := range this.coding {
-		path := filepath.Join(dirpath, fmt.Sprintf("%s_m%d%s", this.base, i, this.ext))
-		//fmt.Printf("Path is: %s\n", path)
-		file, err := os.Create(path)
-		if err != nil {
-			return err
-		}
-		defer file.Close()
-		_, err = file.Write(buf)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+	return this.write(this.coding, "m")
 }
 
 func (this *fileBlockWriter) WriteErased(erasures []int) error {
 	var path string
-	
+
 	wd, err := os.Getwd()
 	if err != nil {
 		return err
 	}
-	
-	dirpath := filepath.Join(wd, "MyCoding")
-	err = os.Mkdir(dirpath, 0777)
-	if err != nil && !os.IsExist(err) {
-		return err
-	}
-	
-	
+
 	for _, erasure := range erasures {
-	
+
 		if erasure == -1 {
 			break
 		}
-		
+
 		if erasure < len(this.data) {
-			path = filepath.Join(dirpath, fmt.Sprintf("%s_k%d%s", this.base, erasure, this.ext))
+			path = filepath.Join(wd, this.dir, fmt.Sprintf("%s_k%d%s", this.base, erasure, this.ext))
 		} else {
-			path = filepath.Join(dirpath, fmt.Sprintf("%s_m%d%s", this.base, erasure, this.ext))
+			path = filepath.Join(wd, this.dir, fmt.Sprintf("%s_m%d%s", this.base, erasure, this.ext))
 		}
 		fmt.Printf("Path is: %s\n", path)
 		file, err := os.Create(path)
@@ -187,13 +162,13 @@ func (this *fileBlockWriter) WriteErased(erasures []int) error {
 			return err
 		}
 		defer file.Close()
-		
+
 		if erasure < len(this.data) {
 			_, err = file.Write(this.data[erasure])
 		} else {
-			_, err = file.Write(this.coding[erasure - len(this.data)])
+			_, err = file.Write(this.coding[erasure-len(this.data)])
 		}
-		
+
 		if err != nil {
 			return err
 		}
@@ -204,17 +179,17 @@ func (this *fileBlockWriter) WriteErased(erasures []int) error {
 func compareAndGetSizes(src []LenReader) (size int64, err error) {
 	size = 0
 	err = nil
-	
-	for i := 0 ; i < len(src) ; i++ {
-	
+
+	for i := 0; i < len(src); i++ {
+
 		test_size := int64(0)
-		
+
 		if src[i] != nil {
 			test_size = src[i].Len()
 		}
-		
-		//Make sure all blocks are the same length 
-		if test_size != 0 {	
+
+		//Make sure all blocks are the same length
+		if test_size != 0 {
 			if size != 0 && size != test_size {
 				err = blocksUnequalErr
 			}
@@ -225,10 +200,10 @@ func compareAndGetSizes(src []LenReader) (size int64, err error) {
 	return
 }
 
-func allocateBuffers(n int, buffersize int64) ([][]byte) {
+func allocateBuffers(n int, buffersize int64) [][]byte {
 	bufs := make([][]byte, n)
-	
-	for i := 0 ; i < n ; i++ {
+
+	for i := 0; i < n; i++ {
 		bufs[i] = make([]byte, buffersize)
 	}
 	return bufs
