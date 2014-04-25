@@ -42,7 +42,7 @@ func intSliceToC(slice []int) *C.int {
 
 //PrintMatrix prints the contents of a coding matrix.
 func PrintMatrix(matrix []int, r, c, w int) {
-	C.jerasure_print_matrix(IntSliceToC(matrix), C.int(r), C.int(c), C.int(w))
+	C.jerasure_print_matrix(intSliceToC(matrix), C.int(r), C.int(c), C.int(w))
 }
 
 type LenReader interface {
