@@ -35,8 +35,8 @@ var (
 var noDataErr = errors.New("Source data is empty")
 var blocksUnequalErr = errors.New("Input block sizes do not match.")
 
-//IntSliceToC converts a Go slice into a C int pointer array
-func IntSliceToC(slice []int) *C.int {
+//intSliceToC converts a Go slice into a C int pointer array
+func intSliceToC(slice []int) *C.int {
 	return (*C.int)(unsafe.Pointer(&slice[0]))
 }
 
