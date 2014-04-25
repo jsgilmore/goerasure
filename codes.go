@@ -171,7 +171,7 @@ func (this *matrixCode) Decode(data, coding [][]byte, erasures []int) {
 	dataC := blockToC(data)
 	codingC := blockToC(coding)
 
-	erasuresC := IntSliceToC(erasures)
+	erasuresC := intSliceToC(erasures)
 
 	// TODO: Buffersize is int64, but the encoding and decoding methods
 	// use int. This should probably be made int in the go code as well,
@@ -219,7 +219,7 @@ func (this *bitmatrixCode) Decode(data, coding [][]byte, erasures []int) {
 	dataC := blockToC(data)
 	codingC := blockToC(coding)
 
-	erasuresC := IntSliceToC(erasures)
+	erasuresC := intSliceToC(erasures)
 
 	// TODO: Buffersize is int64, but the encoding and decoding methods
 	// use int.
